@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeClaw &mdash;Take Back Your Machine from OpenClaw</title>
+<meta name="description" content="DeClaw completely removes OpenClaw from your Mac, PC, or Linux machine. One click. No leftovers. $5.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg-subtle: #111119;
+    --surface: #16161f;
+    --surface-hover: #1e1e2a;
+    --red: #e94560;
+    --red-glow: rgba(233, 69, 96, 0.3);
+    --red-dim: rgba(233, 69, 96, 0.1);
+    --green: #00d2d3;
+    --green-glow: rgba(0, 210, 211, 0.25);
+    --amber: #feca57;
+    --text: #eaf0f6;
+    --text-dim: #6b7a8d;
+    --text-mid: #9aa8b8;
+    --border: #1e2030;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Animated background threat grid ── */
+  .threat-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .threat-bg::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background:
+      radial-gradient(ellipse 600px 600px at 20% 20%, rgba(233, 69, 96, 0.04), transparent),
+      radial-gradient(ellipse 500px 500px at 80% 60%, rgba(233, 69, 96, 0.03), transparent),
+      radial-gradient(ellipse 400px 400px at 50% 90%, rgba(233, 69, 96, 0.02), transparent);
+    animation: threatPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes threatPulse {
+    0% { opacity: 0.5; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.05); }
+  }
+
+  .grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(233, 69, 96, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(233, 69, 96, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 30%, black, transparent);
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 1rem 2rem;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .nav-logo {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .nav-logo .claw { color: var(--red); }
+  .nav-cta {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .nav-cta:hover {
+    background: #ff5a7a;
+    box-shadow: 0 0 25px var(--red-glow);
+    transform: translateY(-1px);
+  }
+
+  /* ── Sections ── */
+  section { position: relative; z-index: 1; }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 6rem;
+  }
+  .hero-inner { max-width: 800px; }
+
+  .threat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--red-dim);
+    border: 1px solid rgba(233, 69, 96, 0.25);
+    border-radius: 100px;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--red);
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .threat-badge .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.2rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+  }
+  .hero h1 .highlight {
+    background: linear-gradient(135deg, var(--red), #ff6b8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1.2rem;
+    color: var(--text-mid);
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+  .btn-primary {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-primary:hover {
+    background: #ff5a7a;
+    box-shadow: 0 4px 40px var(--red-glow);
+    transform: translateY(-2px);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-mid);
+    border: 1px solid var(--border);
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-secondary:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+
+  .price-tag {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+  }
+  .price-tag strong {
+    color: var(--text);
+    font-size: 1.1rem;
+  }
+
+  .platform-row {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+  .platform-row span { display: flex; align-items: center; gap: 0.4rem; }
+
+  /* ── Scary terminal ── */
+  .terminal-section {
+    padding: 4rem 0 6rem;
+  }
+  .terminal {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 750px;
+    margin: 0 auto;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 60px var(--red-dim);
+  }
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    background: #141420;
+    border-bottom: 1px solid var(--border);
+  }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.r { background: #ff5f57; }
+  .terminal-dot.y { background: #febc2e; }
+  .terminal-dot.g { background: #28c840; }
+  .terminal-title {
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .terminal-body {
+    padding: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.9;
+    color: var(--text-dim);
+  }
+  .terminal-body .prompt { color: var(--red); }
+  .terminal-body .cmd { color: var(--text); }
+  .terminal-body .warn { color: var(--amber); }
+  .terminal-body .danger { color: var(--red); }
+  .terminal-body .found { color: var(--red); opacity: 0.9; }
+  .terminal-body .dim { color: #3a3f55; }
+
+  .line {
+    opacity: 0;
+    animation: lineAppear 0.3s forwards;
+  }
+  .line:nth-child(1)  { animation-delay: 0.3s; }
+  .line:nth-child(2)  { animation-delay: 0.8s; }
+  .line:nth-child(3)  { animation-delay: 1.4s; }
+  .line:nth-child(4)  { animation-delay: 1.7s; }
+  .line:nth-child(5)  { animation-delay: 2.0s; }
+  .line:nth-child(6)  { animation-delay: 2.3s; }
+  .line:nth-child(7)  { animation-delay: 2.6s; }
+  .line:nth-child(8)  { animation-delay: 2.9s; }
+  .line:nth-child(9)  { animation-delay: 3.2s; }
+  .line:nth-child(10) { animation-delay: 3.5s; }
+  .line:nth-child(11) { animation-delay: 4.0s; }
+  .line:nth-child(12) { animation-delay: 4.5s; }
+
+  @keyframes lineAppear {
+    to { opacity: 1; }
+  }
+
+  /* ── Fear Section ── */
+  .fear-section {
+    padding: 6rem 0;
+  }
+  .fear-section h2 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .fear-section .sub {
+    text-align: center;
+    color: var(--text-mid);
+    max-width: 600px;
+    margin: 0 auto 3.5rem;
+    font-size: 1.05rem;
+  }
+
+  .fear-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.2rem;
+  }
+  .fear-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem;
+    transition: all 0.3s;
+  }
+  .fear-card:hover {
+    border-color: rgba(233, 69, 96, 0.3);
+    box-shadow: 0 0 30px var(--red-dim);
+    transform: translateY(-2px);
+  }
+  .fear-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+  }
+  .fear-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+  .fear-card p {
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  /* ── Stats banner ── */
+  .stats-banner {
+    padding: 4rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-subtle);
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--red);
+    letter-spacing: -0.02em;
+  }
+  .stat-label {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
+  }
+
+  /* ── Solution Section ── */
+  .solution-section {
+    padding: 6rem 0;
+  }
+  .solution-section h2 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .solution-section h2 .green {
+    color: var(--green);
+  }
+  .solution-section .sub {
+    text-align: center;
+    color: var(--text-mid);
+    max-width: 580px;
+    margin: 0 auto 3.5rem;
+    font-size: 1.05rem;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+  }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+  }
+  .step-num {
+    width: 40px;
+    height: 40px;
+    background: var(--red-dim);
+    border: 1px solid rgba(233, 69, 96, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--red);
+    margin: 0 auto 1rem;
+  }
+  .step h3 {
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .step p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  /* ── App preview mock ── */
+  .preview-container {
+    max-width: 650px;
+    margin: 0 auto;
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 80px rgba(0, 210, 211, 0.06), 0 0 0 1px var(--border);
+  }
+  .preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #141420;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-body {
+    padding: 1.5rem;
+  }
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+  }
+  .preview-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+  .preview-title .claw { color: var(--red); }
+  .preview-badge {
+    background: rgba(0, 210, 211, 0.1);
+    color: var(--green);
+    padding: 0.25rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .preview-status {
+    font-size: 0.85rem;
+    color: var(--text-mid);
+    margin-bottom: 1rem;
+  }
+  .preview-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.8rem;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    margin-bottom: 0.35rem;
+    font-size: 0.82rem;
+  }
+  .preview-check {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--red);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .preview-check.checked {
+    background: var(--red);
+  }
+  .preview-check.checked::after {
+    content: '✓';
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+  }
+  .preview-item-label { color: var(--text); flex: 1; }
+  .preview-item-tag {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .preview-item-tag.critical { background: var(--red-dim); color: var(--red); }
+  .preview-item-tag.rec { background: rgba(254, 202, 87, 0.1); color: var(--amber); }
+  .preview-item-tag.opt { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+  .preview-item-size { color: var(--text-dim); font-size: 0.75rem; }
+  .preview-btn {
+    display: block;
+    width: 100%;
+    margin-top: 1.2rem;
+    padding: 0.75rem;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: default;
+  }
+
+  /* ── Testimonial / Quote ── */
+  .quote-section {
+    padding: 5rem 0;
+    text-align: center;
+  }
+  .big-quote {
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    font-weight: 600;
+    font-style: italic;
+    color: var(--text-mid);
+    max-width: 650px;
+    margin: 0 auto 1rem;
+    line-height: 1.5;
+  }
+  .big-quote em { color: var(--text); font-style: italic; }
+  .quote-attr {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  /* ── CTA Section ── */
+  .cta-section {
+    padding: 6rem 0 8rem;
+    text-align: center;
+  }
+  .cta-section h2 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 900;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .cta-section .sub {
+    color: var(--text-mid);
+    font-size: 1.05rem;
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+  }
+  .cta-price {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+  }
+  .cta-price strong { color: var(--text); }
+  .cta-guarantee {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  /* ── FAQ ── */
+  .faq-section {
+    padding: 0 0 6rem;
+  }
+  .faq-section h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .faq-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .faq-item h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .faq-item p {
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 2rem;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+  footer a { color: var(--text-dim); }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    nav { padding: 0.8rem 1rem; }
+    .hero { padding: 7rem 1.2rem 4rem; }
+    .terminal-body { font-size: 0.7rem; padding: 1rem; }
+    .fear-grid, .steps, .faq-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="threat-bg">
+  <div class="grid-lines"></div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <a href="#" class="nav-logo">🐾 De<span class="claw">Claw</span></a>
+  <a href="#buy" class="nav-cta">Get DeClaw &mdash;$5</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="threat-badge">
+      <span class="dot"></span>
+      OpenClaw is running on your machine right now
+    </div>
+
+    <h1>Do you even know what<br><span class="highlight">OpenClaw is doing?</span></h1>
+
+    <p class="hero-sub">
+      It has access to your files, your messages, your shell. It runs a background daemon 24/7.
+      It installed plugins you never approved. It&#8217;s time to take your machine back.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="#buy" class="btn-primary">🧹 Remove OpenClaw &mdash;$5</a>
+      <a href="#how" class="btn-secondary">See what it finds</a>
+    </div>
+
+    <p class="price-tag">One-time purchase. <strong>No subscription.</strong> Works on all 3 platforms.</p>
+
+    <div style="height: 1.5rem"></div>
+
+    <div class="platform-row">
+      <span>🍎 macOS</span>
+      <span>🪟 Windows</span>
+      <span>🐧 Linux</span>
+    </div>
+  </div>
+</section>
+
+<!-- Scary terminal -->
+<section class="terminal-section">
+  <div class="container">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span class="terminal-title">what openclaw left on your machine</span>
+      </div>
+      <div class="terminal-body">
+        <div class="line"><span class="prompt">$</span> <span class="cmd">declaw --scan</span></div>
+        <div class="line"><br></div>
+        <div class="line"><span class="warn">⚠  Scanning system...</span></div>
+        <div class="line"><br></div>
+        <div class="line"><span class="found">■ CRITICAL</span>&nbsp; Background daemon running &nbsp;<span class="dim">ai.openclaw.gateway (PID 4821)</span></div>
+        <div class="line"><span class="found">■ CRITICAL</span>&nbsp; LaunchAgent installed &nbsp;<span class="dim">~/Library/LaunchAgents/ai.openclaw.gateway.plist</span></div>
+        <div class="line"><span class="found">■ CRITICAL</span>&nbsp; Full shell access granted &nbsp;<span class="dim">~/.openclaw/workspace/</span></div>
+        <div class="line"><span class="warn">■ WARNING</span>&nbsp; WhatsApp credentials stored &nbsp;<span class="dim">~/.openclaw/credentials/ (2.4 MB)</span></div>
+        <div class="line"><span class="warn">■ WARNING</span>&nbsp; 14 ClawHub plugins installed &nbsp;<span class="dim">~/.openclaw/plugins/ (48 MB)</span></div>
+        <div class="line"><span class="warn">■ WARNING</span>&nbsp; Discord bot token found &nbsp;<span class="dim">~/.openclaw/discord/config.json</span></div>
+        <div class="line"><span class="dim">■ DATA &nbsp;&nbsp;&nbsp;</span>&nbsp; Agent memory database &nbsp;<span class="dim">~/.openclaw/memory/ (156 MB)</span></div>
+        <div class="line"><br><span class="danger">Found 23 items across 7 categories. Total: 412 MB</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Fear cards -->
+<section class="fear-section">
+  <div class="container">
+    <h2>Still think it&#8217;s <span style="color:var(--red)">harmless?</span></h2>
+    <p class="sub">OpenClaw was designed to embed itself deep into your system. Uninstalling the app barely scratches the surface.</p>
+
+    <div class="fear-grid">
+      <div class="fear-card">
+        <div class="fear-icon">👁️</div>
+        <h3>It never stops watching</h3>
+        <p>The gateway daemon starts at boot and runs 24/7 &mdash; even when you&#8217;re not using it. It maintains persistent WebSocket connections and monitors your file system in the background.</p>
+      </div>
+      <div class="fear-card">
+        <div class="fear-icon">🔑</div>
+        <h3>It stores your credentials</h3>
+        <p>WhatsApp auth tokens, Discord bot secrets, Telegram keys &mdash; OpenClaw stores them all in plain directories on your machine. Uninstalling the app doesn&#8217;t delete them.</p>
+      </div>
+      <div class="fear-card">
+        <div class="fear-icon">🧩</div>
+        <h3>ClawHub plugins are a black box</h3>
+        <p>Anyone can publish a plugin to ClawHub. Malicious plugins have already been found stealing credentials. Do you know what&#8217;s installed on your machine?</p>
+      </div>
+      <div class="fear-card">
+        <div class="fear-icon">🧠</div>
+        <h3>It remembers everything</h3>
+        <p>OpenClaw&#8217;s "long-term memory" stores conversations, habits, preferences, and personal data in a local database. This data persists even after you stop using it.</p>
+      </div>
+      <div class="fear-card">
+        <div class="fear-icon">💀</div>
+        <h3>"God Mode" shell access</h3>
+        <p>If you gave it full system access, OpenClaw can read, write, and execute anything on your machine. Every file. Every script. No guardrails.</p>
+      </div>
+      <div class="fear-card">
+        <div class="fear-icon">👻</div>
+        <h3>Legacy ghosts</h3>
+        <p>Used it when it was called Clawdbot? Or Moltbot? Those config directories are still on your machine. Three names, three sets of leftovers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-banner">
+  <div class="container">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-num">100K+</div>
+        <div class="stat-label">GitHub stars on OpenClaw</div>
+      </div>
+      <div>
+        <div class="stat-num">2M+</div>
+        <div class="stat-label">visitors in a single week</div>
+      </div>
+      <div>
+        <div class="stat-num">23</div>
+        <div class="stat-label">avg. leftover files per install</div>
+      </div>
+      <div>
+        <div class="stat-num">0</div>
+        <div class="stat-label">built-in way to fully uninstall</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Solution -->
+<section id="how" class="solution-section">
+  <div class="container">
+    <h2>Take it all back. <span class="green">In one click.</span></h2>
+    <p class="sub">DeClaw scans your entire system, shows you exactly what OpenClaw left behind, and lets you choose what to remove. No terminal. No guessing.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Open DeClaw</h3>
+        <p>Double-click the app. No terminal, no commands, no setup. It just works.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Review what it found</h3>
+        <p>DeClaw scans for services, configs, credentials, plugins, and data &mdash;then shows you everything in a clear checklist.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Remove with confidence</h3>
+        <p>Choose what to keep and what to nuke. DeClaw stops daemons, cleans files, and removes scheduled tasks. Done.</p>
+      </div>
+    </div>
+
+    <!-- App preview -->
+    <div class="preview-container">
+      <div class="preview-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+      </div>
+      <div class="preview-body">
+        <div class="preview-header">
+          <span class="preview-title">🐾 De<span class="claw">Claw</span></span>
+          <span class="preview-badge">macOS</span>
+        </div>
+        <div class="preview-status">Found 8 items (412.6 MB)</div>
+
+        <div class="preview-item">
+          <div class="preview-check checked"></div>
+          <span class="preview-item-label">⚙️ LaunchAgent (ai.openclaw.gateway)</span>
+          <span class="preview-item-tag critical">Critical</span>
+          <span class="preview-item-size">4 KB</span>
+        </div>
+        <div class="preview-item">
+          <div class="preview-check checked"></div>
+          <span class="preview-item-label">📦 OpenClaw npm package</span>
+          <span class="preview-item-tag critical">Critical</span>
+          <span class="preview-item-size">89 MB</span>
+        </div>
+        <div class="preview-item">
+          <div class="preview-check checked"></div>
+          <span class="preview-item-label">🔑 WhatsApp credentials</span>
+          <span class="preview-item-tag rec">Recommended</span>
+          <span class="preview-item-size">2.4 MB</span>
+        </div>
+        <div class="preview-item">
+          <div class="preview-check checked"></div>
+          <span class="preview-item-label">🧩 Plugins directory (14 items)</span>
+          <span class="preview-item-tag rec">Recommended</span>
+          <span class="preview-item-size">48 MB</span>
+        </div>
+        <div class="preview-item">
+          <div class="preview-check checked"></div>
+          <span class="preview-item-label">🔗 Discord bot config</span>
+          <span class="preview-item-tag rec">Recommended</span>
+          <span class="preview-item-size">128 KB</span>
+        </div>
+        <div class="preview-item">
+          <div class="preview-check"></div>
+          <span class="preview-item-label">💾 Agent memory database</span>
+          <span class="preview-item-tag opt">Optional</span>
+          <span class="preview-item-size">156 MB</span>
+        </div>
+
+        <button class="preview-btn">🧹 Remove Selected</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quote -->
+<section class="quote-section">
+  <div class="container">
+    <p class="big-quote">&ldquo;I had no idea OpenClaw had installed <em>fourteen plugins</em> I never asked for. DeClaw found all of them in seconds.&rdquo;</p>
+    <p class="quote-attr">&mdash; An actual human who got their machine back</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="buy" class="cta-section">
+  <div class="container">
+    <h2>Your machine. Your rules.</h2>
+    <p class="sub">Stop wondering what OpenClaw left behind. Find out in 10 seconds and remove it all in one click.</p>
+    <a href="https://declaw.lemonsqueezy.com/buy" class="btn-primary" style="font-size:1.2rem; padding: 1.1rem 3rem;">
+      🧹 Get DeClaw &mdash;$5
+    </a>
+    <p class="cta-price">One-time purchase. <strong>Instant download.</strong> Works on Mac, Windows & Linux.</p>
+    <p class="cta-guarantee">30-day money-back guarantee. No questions asked.</p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="container">
+    <h2>Questions</h2>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <h3>Is DeClaw safe to run?</h3>
+        <p>Yes. DeClaw only reads your file system to find OpenClaw artifacts. It shows you everything it finds before removing anything &mdash;you&#8217;re always in control.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What exactly does it remove?</h3>
+        <p>Background daemons, launch agents, systemd services, scheduled tasks, npm packages, config files, credentials, ClawHub plugins, memory databases, logs, and legacy Clawdbot/Moltbot leftovers.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Do I need the terminal?</h3>
+        <p>No. DeClaw is a native app. Double-click to open. No commands, no PATH issues, no npm. Just a clean interface.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What if OpenClaw isn&#8217;t installed?</h3>
+        <p>DeClaw will scan your system and tell you it&#8217;s clean. No charge for peace of mind &mdash;but you already paid $5, so at least you know for sure.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Does it work with Clawdbot/Moltbot?</h3>
+        <p>Yes. DeClaw detects all three eras of the project &mdash;OpenClaw, Moltbot, and the original Clawdbot &mdash;and cleans up remnants from each.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can I get a refund?</h3>
+        <p>Absolutely. 30-day money-back guarantee, no questions asked. If DeClaw doesn&#8217;t work for you, you get your $5 back.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>DeClaw is an independent tool and is not affiliated with OpenClaw or its creators.</p>
+  <p style="margin-top: 0.5rem;">© 2026 DeClaw. All rights reserved. &nbsp;|&nbsp; <a href="#">Privacy</a> &nbsp;|&nbsp; <a href="#">Terms</a></p>
+</footer>
+
+</body>
+</html>
