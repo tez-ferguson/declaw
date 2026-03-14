@@ -640,6 +640,147 @@
   }
   footer a { color: var(--text-dim); }
 
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.open {
+    display: flex;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    max-width: 440px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px var(--red-dim);
+    animation: modalIn 0.25s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-close {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.25rem;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-logo {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .modal h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+  }
+  .modal-sub {
+    color: var(--text-mid);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+  .modal-field {
+    margin-bottom: 1rem;
+  }
+  .modal-field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-mid);
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .modal-field input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .modal-field input:focus {
+    border-color: rgba(233, 69, 96, 0.5);
+    box-shadow: 0 0 0 3px var(--red-dim);
+  }
+  .modal-field input::placeholder { color: var(--text-dim); }
+  .modal-submit {
+    display: block;
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 0.9rem;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .modal-submit:hover:not(:disabled) {
+    background: #ff5a7a;
+    box-shadow: 0 4px 30px var(--red-glow);
+    transform: translateY(-1px);
+  }
+  .modal-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .modal-status {
+    margin-top: 1rem;
+    font-size: 0.88rem;
+    text-align: center;
+    min-height: 1.2em;
+  }
+  .modal-status.success { color: var(--green); }
+  .modal-status.error   { color: var(--red); }
+  .modal-success-state {
+    text-align: center;
+    padding: 1rem 0;
+  }
+  .modal-success-state .check-circle {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  .modal-success-state h3 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+  .modal-success-state p {
+    color: var(--text-mid);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
   /* ── Responsive ── */
   @media (max-width: 640px) {
     nav { padding: 0.8rem 1rem; }
@@ -659,7 +800,7 @@
 <!-- Nav -->
 <nav>
   <a href="#" class="nav-logo">🐾 De<span class="claw">Claw</span></a>
-  <a href="#buy" class="nav-cta">Get DeClaw &mdash;$5</a>
+  <button class="nav-cta" onclick="openDeclawModal()">Get DeClaw &mdash;$5</button>
 </nav>
 
 <!-- Hero -->
@@ -678,7 +819,7 @@
     </p>
 
     <div class="hero-cta-group">
-      <a href="#buy" class="btn-primary">🧹 Remove OpenClaw &mdash;$5</a>
+      <button class="btn-primary" onclick="openDeclawModal()">🧹 Remove OpenClaw &mdash;$5</button>
       <a href="#how" class="btn-secondary">See what it finds</a>
     </div>
 
@@ -881,9 +1022,9 @@
   <div class="container">
     <h2>Your machine. Your rules.</h2>
     <p class="sub">Stop wondering what OpenClaw left behind. Find out in 10 seconds and remove it all in one click.</p>
-    <a href="https://declaw.lemonsqueezy.com/buy" class="btn-primary" style="font-size:1.2rem; padding: 1.1rem 3rem;">
+    <button class="btn-primary" style="font-size:1.2rem; padding: 1.1rem 3rem;" onclick="openDeclawModal()">
       🧹 Get DeClaw &mdash;$5
-    </a>
+    </button>
     <p class="cta-price">One-time purchase. <strong>Instant download.</strong> Works on Mac, Windows & Linux.</p>
     <p class="cta-guarantee">30-day money-back guarantee. No questions asked.</p>
   </div>
@@ -927,6 +1068,100 @@
   <p>DeClaw is an independent tool and is not affiliated with OpenClaw or its creators.</p>
   <p style="margin-top: 0.5rem;">© 2026 DeClaw. All rights reserved. &nbsp;|&nbsp; <a href="#">Privacy</a> &nbsp;|&nbsp; <a href="#">Terms</a></p>
 </footer>
+
+<!-- Request modal -->
+<div class="modal-overlay" id="declawModal" onclick="handleOverlayClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" onclick="closeDeclawModal()" aria-label="Close">&times;</button>
+
+    <div id="modalForm">
+      <div class="modal-logo">🧹</div>
+      <h2 id="modalTitle">Remove OpenClaw &mdash; $5</h2>
+      <p class="modal-sub">Enter your details and we&rsquo;ll get in touch to walk you through removing OpenClaw from your machine.</p>
+
+      <form onsubmit="submitDeclawRequest(event)">
+        <div class="modal-field">
+          <label for="declawName">Your name</label>
+          <input type="text" id="declawName" name="name" placeholder="Jane Smith" required autocomplete="name">
+        </div>
+        <div class="modal-field">
+          <label for="declawEmail">Email address</label>
+          <input type="email" id="declawEmail" name="email" placeholder="jane@example.com" required autocomplete="email">
+        </div>
+        <button type="submit" class="modal-submit" id="modalSubmitBtn">
+          Send my request &rarr;
+        </button>
+        <p class="modal-status" id="modalStatus" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <div class="modal-success-state" id="modalSuccess" style="display:none;">
+      <div class="check-circle">✅</div>
+      <h3>Request sent!</h3>
+      <p>We&rsquo;ve received your details and will be in touch shortly to help you remove OpenClaw for good.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openDeclawModal() {
+    document.getElementById('declawModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('declawName').focus(), 50);
+  }
+
+  function closeDeclawModal() {
+    document.getElementById('declawModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('declawModal')) closeDeclawModal();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDeclawModal();
+  });
+
+  async function submitDeclawRequest(e) {
+    e.preventDefault();
+
+    const name    = document.getElementById('declawName').value.trim();
+    const email   = document.getElementById('declawEmail').value.trim();
+    const btn     = document.getElementById('modalSubmitBtn');
+    const status  = document.getElementById('modalStatus');
+
+    btn.disabled    = true;
+    btn.textContent = 'Sending…';
+    status.className = 'modal-status';
+    status.textContent = '';
+
+    try {
+      const res = await fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      });
+
+      if (res.ok) {
+        document.getElementById('modalForm').style.display = 'none';
+        document.getElementById('modalSuccess').style.display = 'block';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Request failed (' + res.status + ')');
+      }
+    } catch (err) {
+      status.className = 'modal-status error';
+      status.textContent = 'Something went wrong: ' + err.message + '. Please try again.';
+      btn.disabled    = false;
+      btn.textContent = 'Send my request →';
+    }
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
 
 </body>
 </html>
